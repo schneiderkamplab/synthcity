@@ -26,6 +26,15 @@ from synthcity.plugins.core.distribution import (
 )
 
 
+def _is_categorical_like(series: pd.Series) -> bool:
+    return (
+        pd.api.types.is_categorical_dtype(series)
+        or series.dtype == object
+        or pd.api.types.is_string_dtype(series)
+        or pd.api.types.is_bool_dtype(series)
+    )
+
+
 class Schema(BaseModel):
     """
     Utility class for defining the schema of a Dataset.
@@ -270,14 +279,12 @@ class Schema(BaseModel):
                         )
                         continue
 
-                    is_categorical = pd.api.types.is_categorical_dtype(X[col])
-                    is_object = X[col].dtype == object
-                    is_bool = pd.api.types.is_bool_dtype(X[col])
+                    is_categorical_like = _is_categorical_like(X[col])
                     is_integer = pd.api.types.is_integer_dtype(X[col])
                     is_float = pd.api.types.is_float_dtype(X[col])
                     is_datetime = pd.api.types.is_datetime64_any_dtype(X[col])
 
-                    if is_categorical or is_object or is_bool:
+                    if is_categorical_like:
                         feature_domain[col] = CategoricalDistribution(
                             name=col,
                             data=X[col],
@@ -307,18 +314,12 @@ class Schema(BaseModel):
                         )
                 elif sampling_strategy == "uniform":
 
-                    is_categorical = pd.api.types.is_categorical_dtype(X[col])
-                    is_object = X[col].dtype == object
-                    is_bool = pd.api.types.is_bool_dtype(X[col])
+                    is_categorical_like = _is_categorical_like(X[col])
                     is_integer = pd.api.types.is_integer_dtype(X[col])
                     is_float = pd.api.types.is_float_dtype(X[col])
                     is_datetime = pd.api.types.is_datetime64_any_dtype(X[col])
 
-                    if (
-                        pd.api.types.is_categorical_dtype(X[col])
-                        or X[col].dtype == object
-                        or pd.api.types.is_bool_dtype(X[col])
-                    ):
+                    if is_categorical_like:
                         feature_domain[col] = CategoricalDistribution(
                             name=col,
                             choices=list(X[col].unique()),
