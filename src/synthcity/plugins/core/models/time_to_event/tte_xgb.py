@@ -10,11 +10,9 @@ from xgbse.converters import convert_to_structured
 
 try:
     # third party
-    from scipy.integrate import trapz
+    from scipy.integrate import trapezoid as trapz
 except ImportError:
-    from numpy import (
-        trapz,
-    )  # As a fallback for older versions if scipy's import path changes
+    from numpy import trapezoid as trapz
 
 # synthcity absolute
 from synthcity.plugins.core.distribution import (

@@ -5,21 +5,23 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 from lifelines import KaplanMeierFitter
-from xgbse.non_parametric import _get_conditional_probs_from_survival
 
 try:
     # third party
-    from scipy.integrate import trapz
+    from scipy.integrate import trapezoid as trapz
 except ImportError:
-    from numpy import (
-        trapz,
-    )  # As a fallback for older versions if scipy's import path changes
+    from numpy import trapezoid as trapz
 
 # synthcity absolute
 from synthcity.plugins.core.models.survival_analysis.third_party.metrics import (
     brier_score,
     concordance_index_ipcw,
 )
+
+
+def _get_conditional_probs_from_survival(surv: pd.DataFrame) -> pd.DataFrame:
+    conditional_preds = 1 - (surv / surv.shift(1, axis=1).fillna(1))
+    return conditional_preds.fillna(0)
 
 
 def evaluate_c_index(

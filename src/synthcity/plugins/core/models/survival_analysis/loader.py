@@ -8,7 +8,11 @@ import pandas as pd
 from .surv_aft import WeibullAFTSurvivalAnalysis
 from .surv_coxph import CoxPHSurvivalAnalysis
 from .surv_deephit import DeephitSurvivalAnalysis
-from .surv_xgb import XGBSurvivalAnalysis
+
+try:
+    from .surv_xgb import XGBSurvivalAnalysis
+except ImportError:
+    XGBSurvivalAnalysis = None
 
 
 def generate_dataset_for_horizon(
@@ -53,9 +57,10 @@ def get_model_template(model: str) -> Any:
     defaults = {
         "weibull_aft": WeibullAFTSurvivalAnalysis,
         "cox_ph": CoxPHSurvivalAnalysis,
-        "survival_xgboost": XGBSurvivalAnalysis,
         "deephit": DeephitSurvivalAnalysis,
     }
+    if XGBSurvivalAnalysis is not None:
+        defaults["survival_xgboost"] = XGBSurvivalAnalysis
 
     if model in defaults:
         return defaults[model]

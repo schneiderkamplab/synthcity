@@ -12,11 +12,9 @@ from sklearn.model_selection import train_test_split
 
 try:
     # third party
-    from scipy.integrate import trapz
+    from scipy.integrate import trapezoid as trapz
 except ImportError:
-    from numpy import (
-        trapz,
-    )  # As a fallback for older versions if scipy's import path changes
+    from numpy import trapezoid as trapz
 
 # synthcity absolute
 from synthcity.plugins.core.distribution import (

@@ -26,7 +26,6 @@ from synthcity.plugins.core.models.mlp import MLP
 from synthcity.plugins.core.models.survival_analysis import (
     CoxPHSurvivalAnalysis,
     DeephitSurvivalAnalysis,
-    XGBSurvivalAnalysis,
     evaluate_survival_model,
 )
 from synthcity.plugins.core.models.time_series_survival.benchmarks import (
@@ -38,11 +37,20 @@ from synthcity.plugins.core.models.time_series_survival.ts_surv_coxph import (
 from synthcity.plugins.core.models.time_series_survival.ts_surv_dynamic_deephit import (
     DynamicDeephitTimeSeriesSurvival,
 )
-from synthcity.plugins.core.models.time_series_survival.ts_surv_xgb import (
-    XGBTimeSeriesSurvival,
-)
 from synthcity.plugins.core.models.ts_model import TimeSeriesModel
 from synthcity.utils.serialization import load_from_file, save_to_file
+
+try:
+    from synthcity.plugins.core.models.survival_analysis import XGBSurvivalAnalysis
+except ImportError:
+    XGBSurvivalAnalysis = None
+
+try:
+    from synthcity.plugins.core.models.time_series_survival.ts_surv_xgb import (
+        XGBTimeSeriesSurvival,
+    )
+except ImportError:
+    XGBTimeSeriesSurvival = None
 
 
 class PerformanceEvaluator(MetricEvaluator):
@@ -661,6 +669,8 @@ class PerformanceEvaluatorXGB(PerformanceEvaluator):
         X_syn: DataLoader,
     ) -> Dict:
         if self._task_type == "survival_analysis":
+            if XGBSurvivalAnalysis is None:
+                raise RuntimeError("xgbse is required for survival XGBoost metrics")
             return self._evaluate_survival_model(
                 XGBSurvivalAnalysis,
                 {
@@ -693,6 +703,10 @@ class PerformanceEvaluatorXGB(PerformanceEvaluator):
                 X_syn,
             )
         elif self._task_type == "time_series_survival":
+            if XGBTimeSeriesSurvival is None:
+                raise RuntimeError(
+                    "xgbse is required for time-series survival XGBoost metrics"
+                )
             return self._evaluate_time_series_survival_performance(
                 XGBTimeSeriesSurvival,
                 {
@@ -1024,6 +1038,8 @@ class FeatureImportanceRankDistance(MetricEvaluator):
             return results
 
         if self._task_type == "survival_analysis":
+            if XGBSurvivalAnalysis is None:
+                raise RuntimeError("xgbse is required for survival XGBoost metrics")
             model = XGBSurvivalAnalysis(
                 n_jobs=2,
                 verbosity=0,

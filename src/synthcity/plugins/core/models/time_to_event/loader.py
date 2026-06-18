@@ -8,7 +8,11 @@ from .tte_date import DATETimeToEvent
 from .tte_deephit import DeephitTimeToEvent
 from .tte_survival_function_regression import SurvivalFunctionTimeToEvent
 from .tte_tenn import TENNTimeToEvent
-from .tte_xgb import XGBTimeToEvent
+
+try:
+    from .tte_xgb import XGBTimeToEvent
+except ImportError:
+    XGBTimeToEvent = None
 
 
 def get_model_template(model: str) -> Any:
@@ -17,10 +21,11 @@ def get_model_template(model: str) -> Any:
         "date": DATETimeToEvent,
         "weibull_aft": WeibullAFTTimeToEvent,
         "cox_ph": CoxPHTimeToEvent,
-        "survival_xgboost": XGBTimeToEvent,
         "deephit": DeephitTimeToEvent,
         "survival_function_regression": SurvivalFunctionTimeToEvent,
     }
+    if XGBTimeToEvent is not None:
+        defaults["survival_xgboost"] = XGBTimeToEvent
 
     if model in defaults:
         return defaults[model]
