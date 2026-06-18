@@ -254,7 +254,7 @@ class TabularEncoder(TransformerMixin, BaseEstimator):
         return self._column_transform_info_list
 
     def n_features(self) -> int:
-        return np.sum(
+        return sum(
             column_transform_info.output_dimensions
             for column_transform_info in self._column_transform_info_list
         )
