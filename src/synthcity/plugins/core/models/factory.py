@@ -5,14 +5,6 @@ from typing import Any, Union
 # third party
 from pydantic import validate_arguments
 from torch import nn
-from tsai.models.InceptionTime import InceptionTime
-from tsai.models.InceptionTimePlus import InceptionTimePlus
-from tsai.models.OmniScaleCNN import OmniScaleCNN
-from tsai.models.ResCNN import ResCNN
-from tsai.models.RNN_FCN import MLSTM_FCN
-from tsai.models.TCN import TCN
-from tsai.models.XceptionTime import XceptionTime
-from tsai.models.XCM import XCM
 
 # synthcity relative
 from .feature_encoder import (
@@ -39,14 +31,14 @@ MODELS = dict(
     transformer=".transformer.TransformerModel",
     tabnet=".tabnet.TabNet",
     # time series models
-    inceptiontime=InceptionTime,
-    omniscalecnn=OmniScaleCNN,
-    rescnn=ResCNN,
-    mlstmfcn=MLSTM_FCN,
-    tcn=TCN,
-    xceptiontime=XceptionTime,
-    xcm=XCM,
-    inceptiontimeplus=InceptionTimePlus,
+    inceptiontime="tsai.models.InceptionTime.InceptionTime",
+    omniscalecnn="tsai.models.OmniScaleCNN.OmniScaleCNN",
+    rescnn="tsai.models.ResCNN.ResCNN",
+    mlstmfcn="tsai.models.RNN_FCN.MLSTM_FCN",
+    tcn="tsai.models.TCN.TCN",
+    xceptiontime="tsai.models.XceptionTime.XceptionTime",
+    xcm="tsai.models.XCM.XCM",
+    inceptiontimeplus="tsai.models.InceptionTimePlus.InceptionTimePlus",
 )
 
 ACTIVATIONS = dict(
