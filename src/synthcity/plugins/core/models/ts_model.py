@@ -1,4 +1,5 @@
 # stdlib
+from importlib import import_module
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 # third party
@@ -8,15 +9,6 @@ from pydantic import validate_arguments
 from sklearn.model_selection import train_test_split
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset, sampler
-from tsai.models.InceptionTime import InceptionTime
-from tsai.models.InceptionTimePlus import InceptionTimePlus
-from tsai.models.OmniScaleCNN import OmniScaleCNN
-from tsai.models.ResCNN import ResCNN
-from tsai.models.RNN_FCN import MLSTM_FCN
-from tsai.models.TCN import TCN
-from tsai.models.TransformerModel import TransformerModel
-from tsai.models.XceptionTime import XceptionTime
-from tsai.models.XCM import XCM
 
 # synthcity absolute
 import synthcity.logger as log
@@ -41,6 +33,24 @@ modes = [
     "OmniScaleCNN",
     "XCM",
 ]
+
+_TSAI_MODELS = {
+    "InceptionTime": "tsai.models.InceptionTime.InceptionTime",
+    "InceptionTimePlus": "tsai.models.InceptionTimePlus.InceptionTimePlus",
+    "MLSTM_FCN": "tsai.models.RNN_FCN.MLSTM_FCN",
+    "OmniScaleCNN": "tsai.models.OmniScaleCNN.OmniScaleCNN",
+    "ResCNN": "tsai.models.ResCNN.ResCNN",
+    "TCN": "tsai.models.TCN.TCN",
+    "Transformer": "tsai.models.TransformerModel.TransformerModel",
+    "XceptionTime": "tsai.models.XceptionTime.XceptionTime",
+    "XCM": "tsai.models.XCM.XCM",
+}
+
+
+def _tsai_model(mode: str) -> type:
+    mod_path, name = _TSAI_MODELS[mode].rsplit(".", 1)
+    module = import_module(mod_path)
+    return getattr(module, name)
 
 
 class TimeSeriesModel(nn.Module):
@@ -578,6 +588,7 @@ class TimeSeriesLayer(nn.Module):
         if mode in ["RNN", "LSTM", "GRU"]:
             self.temporal_layer = temporal_models[mode](**temporal_params)
         elif mode == "MLSTM_FCN":
+            MLSTM_FCN = _tsai_model(mode)
             self.temporal_layer = MLSTM_FCN(
                 c_in=n_temporal_units_in,
                 c_out=n_temporal_units_hidden,
@@ -588,12 +599,14 @@ class TimeSeriesLayer(nn.Module):
                 shuffle=False,
             )
         elif mode == "TCN":
+            TCN = _tsai_model(mode)
             self.temporal_layer = TCN(
                 c_in=n_temporal_units_in,
                 c_out=n_temporal_units_hidden,
                 fc_dropout=dropout,
             )
         elif mode == "InceptionTime":
+            InceptionTime = _tsai_model(mode)
             self.temporal_layer = InceptionTime(
                 c_in=n_temporal_units_in,
                 c_out=n_temporal_units_hidden,
@@ -601,6 +614,7 @@ class TimeSeriesLayer(nn.Module):
                 seq_len=n_temporal_window,
             )
         elif mode == "InceptionTimePlus":
+            InceptionTimePlus = _tsai_model(mode)
             self.temporal_layer = InceptionTimePlus(
                 c_in=n_temporal_units_in,
                 c_out=n_temporal_units_hidden,
@@ -608,22 +622,26 @@ class TimeSeriesLayer(nn.Module):
                 seq_len=n_temporal_window,
             )
         elif mode == "XceptionTime":
+            XceptionTime = _tsai_model(mode)
             self.temporal_layer = XceptionTime(
                 c_in=n_temporal_units_in,
                 c_out=n_temporal_units_hidden,
             )
         elif mode == "ResCNN":
+            ResCNN = _tsai_model(mode)
             self.temporal_layer = ResCNN(
                 c_in=n_temporal_units_in,
                 c_out=n_temporal_units_hidden,
             )
         elif mode == "OmniScaleCNN":
+            OmniScaleCNN = _tsai_model(mode)
             self.temporal_layer = OmniScaleCNN(
                 c_in=n_temporal_units_in,
                 c_out=n_temporal_units_hidden,
                 seq_len=max(n_temporal_window, 10),
             )
         elif mode == "XCM":
+            XCM = _tsai_model(mode)
             self.temporal_layer = XCM(
                 c_in=n_temporal_units_in,
                 c_out=n_temporal_units_hidden,
@@ -631,6 +649,7 @@ class TimeSeriesLayer(nn.Module):
                 fc_dropout=dropout,
             )
         elif mode == "Transformer":
+            TransformerModel = _tsai_model(mode)
             self.temporal_layer = TransformerModel(
                 c_in=n_temporal_units_in,
                 c_out=n_temporal_units_hidden,

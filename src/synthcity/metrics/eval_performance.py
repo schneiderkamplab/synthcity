@@ -28,16 +28,6 @@ from synthcity.plugins.core.models.survival_analysis import (
     DeephitSurvivalAnalysis,
     evaluate_survival_model,
 )
-from synthcity.plugins.core.models.time_series_survival.benchmarks import (
-    evaluate_ts_survival_model,
-)
-from synthcity.plugins.core.models.time_series_survival.ts_surv_coxph import (
-    CoxTimeSeriesSurvival,
-)
-from synthcity.plugins.core.models.time_series_survival.ts_surv_dynamic_deephit import (
-    DynamicDeephitTimeSeriesSurvival,
-)
-from synthcity.plugins.core.models.ts_model import TimeSeriesModel
 from synthcity.utils.serialization import load_from_file, save_to_file
 
 try:
@@ -45,12 +35,45 @@ try:
 except ImportError:
     XGBSurvivalAnalysis = None
 
-try:
-    from synthcity.plugins.core.models.time_series_survival.ts_surv_xgb import (
-        XGBTimeSeriesSurvival,
+def _time_series_model() -> Any:
+    from synthcity.plugins.core.models.ts_model import TimeSeriesModel
+
+    return TimeSeriesModel
+
+
+def _evaluate_ts_survival_model() -> Any:
+    from synthcity.plugins.core.models.time_series_survival.benchmarks import (
+        evaluate_ts_survival_model,
     )
-except ImportError:
-    XGBTimeSeriesSurvival = None
+
+    return evaluate_ts_survival_model
+
+
+def _cox_time_series_survival() -> Any:
+    from synthcity.plugins.core.models.time_series_survival.ts_surv_coxph import (
+        CoxTimeSeriesSurvival,
+    )
+
+    return CoxTimeSeriesSurvival
+
+
+def _dynamic_deephit_time_series_survival() -> Any:
+    from synthcity.plugins.core.models.time_series_survival.ts_surv_dynamic_deephit import (
+        DynamicDeephitTimeSeriesSurvival,
+    )
+
+    return DynamicDeephitTimeSeriesSurvival
+
+
+def _xgb_time_series_survival() -> Any:
+    try:
+        from synthcity.plugins.core.models.time_series_survival.ts_surv_xgb import (
+            XGBTimeSeriesSurvival,
+        )
+    except ImportError:
+        return None
+
+    return XGBTimeSeriesSurvival
 
 
 class PerformanceEvaluator(MetricEvaluator):
@@ -506,6 +529,7 @@ class PerformanceEvaluator(MetricEvaluator):
 
         info = X_gt.info()
         time_horizons = info["time_horizons"]
+        evaluate_ts_survival_model = _evaluate_ts_survival_model()
 
         (
             id_X_static_gt,
@@ -703,6 +727,7 @@ class PerformanceEvaluatorXGB(PerformanceEvaluator):
                 X_syn,
             )
         elif self._task_type == "time_series_survival":
+            XGBTimeSeriesSurvival = _xgb_time_series_survival()
             if XGBTimeSeriesSurvival is None:
                 raise RuntimeError(
                     "xgbse is required for time-series survival XGBoost metrics"
@@ -771,6 +796,7 @@ class PerformanceEvaluatorLinear(PerformanceEvaluator):
             static, temporal, observation_times, T, E = X_gt.unpack()
 
             args: dict = {}
+            CoxTimeSeriesSurvival = _cox_time_series_survival()
             log.info(f"Performance evaluation using CoxTimeSeriesSurvival and {args}")
             return self._evaluate_time_series_survival_performance(
                 CoxTimeSeriesSurvival, args, X_gt, X_syn
@@ -925,7 +951,7 @@ class PerformanceEvaluatorMLP(PerformanceEvaluator):
                 "output_shape": [info["outcome_len"]],
             }
             return self._evaluate_time_series_performance(
-                TimeSeriesModel, args, X_gt, X_syn
+                _time_series_model(), args, X_gt, X_syn
             )
         elif self._task_type == "time_series_survival":
             static, temporal, observation_times, T, E = X_gt.unpack()
@@ -933,6 +959,9 @@ class PerformanceEvaluatorMLP(PerformanceEvaluator):
             info = X_gt.info()
 
             args = {}
+            DynamicDeephitTimeSeriesSurvival = (
+                _dynamic_deephit_time_series_survival()
+            )
             log.info(
                 f"Performance evaluation using DynamicDeephitTimeSeriesSurvival and {args}"
             )
