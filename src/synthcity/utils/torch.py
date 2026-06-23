@@ -18,7 +18,6 @@ def disable_torch_dynamo() -> None:
 
     torch._disable_dynamo = _no_dynamo_wrapper  # type: ignore[attr-defined]
     _seed_existing_dynamo_wrappers()
-    _patch_optimizer_steps(torch)
 
 
 def _no_dynamo_wrapper(
@@ -52,30 +51,3 @@ def _seed_dynamo_wrapper(value: Any) -> None:
             wrapped.__dynamo_disable = wrapped
         except (AttributeError, TypeError):
             pass
-
-
-def _patch_optimizer_steps(torch: ModuleType) -> None:
-    optim = getattr(torch, "optim", None)
-    if optim is None:
-        return
-
-    for value in vars(optim).values():
-        if not isinstance(value, type):
-            continue
-        step = getattr(value, "step", None)
-        wrapped = getattr(step, "__wrapped__", None)
-        if wrapped is not None:
-            setattr(value, "step", _eager_optimizer_step(torch, wrapped))
-
-
-def _eager_optimizer_step(torch: ModuleType, fn: Callable) -> Callable:
-    @functools.wraps(fn)
-    def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-        previous_grad = torch.is_grad_enabled()
-        try:
-            torch.set_grad_enabled(self.defaults.get("differentiable", False))
-            return fn(self, *args, **kwargs)
-        finally:
-            torch.set_grad_enabled(previous_grad)
-
-    return wrapper
