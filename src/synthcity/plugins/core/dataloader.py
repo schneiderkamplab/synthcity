@@ -12,7 +12,6 @@ import torch
 from pydantic import validate_arguments
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from torchvision import transforms
 
 # synthcity absolute
 from synthcity.plugins.core.constraints import Constraints
@@ -21,6 +20,16 @@ from synthcity.plugins.core.models.feature_encoder import DatetimeEncoder
 from synthcity.plugins.core.models.syn_seq.syn_seq_encoder import Syn_SeqEncoder
 from synthcity.utils.compression import compress_dataset, decompress_dataset
 from synthcity.utils.serialization import dataframe_hash
+
+
+def _torchvision_transforms():
+    try:
+        from torchvision import transforms
+    except Exception as exc:
+        raise ImportError(
+            "ImageDataLoader requires torchvision to be installed and importable."
+        ) from exc
+    return transforms
 
 
 class DataLoader(metaclass=ABCMeta):
@@ -1637,6 +1646,7 @@ class ImageDataLoader(DataLoader):
         self.data_transform = None
 
         dummy, _ = data[0]
+        transforms = _torchvision_transforms()
         img_transform = []
         if not isinstance(dummy, PIL.Image.Image):
             img_transform = [transforms.ToPILImage()]
